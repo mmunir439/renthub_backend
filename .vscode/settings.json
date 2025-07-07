@@ -1,0 +1,17 @@
+{
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "github.copilot.chat.edits.newNotebook.enabled": false,
+  "github.copilot.chat.agent.currentEditorContext.enabled": false,
+  "github.copilot.chat.newWorkspaceCreation.enabled": false,
+  "github.copilot.chat.setupTests.enabled": false,
+  "github.copilot.chat.summarizeAgentConversationHistory.enabled": false,
+  "github.copilot.chat.copilotDebugCommand.enabled": false,
+  "github.copilot.chat.reviewSelection.enabled": false,
+  "github.copilot.chat.startDebugging.enabled": false,
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  }
+}

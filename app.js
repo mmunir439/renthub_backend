@@ -4,11 +4,19 @@ const app = express();
 require("dotenv").config(); // for reading from env file
 // Connect to MongoDB
 connectDB();
-// middle ware to parse json
+//global middle ware to parse json that will run on every request
 app.use(express.json());
 //importing all routes here
 const userRoutes = require("./routes/userRoutes.js");
+const itemsRoutes = require("./routes/itemsroutes.js");
+//importing middlesware
+const { verifyToken } = require("./middleware/authMiddleware.js");
+//routes
 app.use("/user", userRoutes);
+app.use("/items", verifyToken, itemsRoutes);
+app.get("/", (req, res) => {
+  res.send("welcome to renthub portal");
+});
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`server is  runing on port:${port}`);

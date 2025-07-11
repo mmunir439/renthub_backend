@@ -13,6 +13,8 @@ const itemsRoutes = require("./routes/itemsroutes.js");
 const { verifyToken } = require("./middleware/authMiddleware.js");
 //routes
 app.use("/user", userRoutes);
+// app.use("/email", sendemail);
+// app.use("/emailtesting", emailRoutes);
 app.use("/items", verifyToken, itemsRoutes);
 app.get("/", (req, res) => {
   res.send("welcome to renthub portal");

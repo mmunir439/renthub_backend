@@ -40,9 +40,9 @@ const RentItemSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    availability: {
+    isRented: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

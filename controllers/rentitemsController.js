@@ -1,4 +1,4 @@
-const RentItem = require("../models/itemsModel");
+const RentItem = require("../models/retnitemModel");
 const cloudinary = require("../config/cloudinary");
 
 // ───────────────────────────────
@@ -9,6 +9,7 @@ exports.addnewitem = async (req, res) => {
     title,
     description,
     category,
+    images,
     pricePerHour,
     location,
     features, // ← still a string right now

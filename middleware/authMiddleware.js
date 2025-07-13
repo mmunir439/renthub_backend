@@ -1,28 +1,41 @@
+// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
+const User = require("../models/userModel");
 
-exports.verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+exports.protect = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    /* ─────────── 1. Get token ─────────── */
+    let token;
 
-    // Accept both 'id' or '_id' from token
-    req.user = { _id: decoded._id || decoded.id };
-
-    if (!req.user._id) {
-      return res
-        .status(401)
-        .json({ message: "Token does not contain user ID" });
+    // 1️⃣  Check Authorization header
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    // 2️⃣  Fallback: cookie named "token"
+    else if (req.cookies?.token) {
+      token = req.cookies.token;
     }
 
-    next();
+    if (!token) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    /* ─────────── 2. Verify token ─────────── */
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // decoded should look like: { id: "64b0b…", iat: ..., exp: ... }
+
+    /* ─────────── 3. Attach fresh user ─────────── */
+    const user = await User.findById(decoded.id || decoded._id).select(
+      "-password"
+    );
+    if (!user) {
+      return res.status(401).json({ message: "User no longer exists" });
+    }
+
+    req.user = user; // 🚀 available in every controller
+    next(); // continue
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.error("Auth error:", err.message);
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

@@ -5,12 +5,12 @@ const {
   approveBooking,
   rejectBooking,
 } = require("../controllers/bookingController");
-const { verifyToken } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 // router.get("/", (req, res) => {
 //   res.send("this booking is done now");
 // });
-router.post("/:itemId", verifyToken, createBooking); // rent item
-router.patch("/:id/approve", verifyToken, approveBooking); // owner action
-router.patch("/:id/reject", verifyToken, rejectBooking); // owner action
+router.post("/:itemId", protect, createBooking); // rent item
+router.patch("/:id/approve", protect, approveBooking); // owner action
+router.patch("/:id/reject", protect, rejectBooking); // owner action
 
 module.exports = router;

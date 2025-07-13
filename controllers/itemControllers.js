@@ -1,45 +1,69 @@
 const RentItem = require("../models/itemsModel");
 const cloudinary = require("../config/cloudinary");
+
+// ───────────────────────────────
+// Add New Item
+// ───────────────────────────────
 exports.addnewitem = async (req, res) => {
   const {
     title,
     description,
     category,
-    images,
     pricePerHour,
     location,
-    features,
+    features, // ← still a string right now
+    isRented,
   } = req.body;
-  const owner = req.user.id; //get the owner from the token
+
+  // 1️⃣  Parse features if it’s a string
+  let parsedFeatures = features;
+  if (typeof features === "string") {
+    try {
+      parsedFeatures = JSON.parse(features); // now it’s an object
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'The ‘features’ field must be valid JSON (e.g. { "battery":"Extra Battery" }).',
+      });
+    }
+  }
+
+  const owner = req.user.id;
+
   try {
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "renthub_items",
-      resource_type: "auto",
-    });
-    const newitem = new RentItem({
+    // 2️⃣  Handle the (optional) image
+    let imageBlock = { url: "", public_id: "" };
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "renthub_items",
+        resource_type: "auto",
+      });
+      imageBlock = { url: result.secure_url, public_id: result.public_id };
+    }
+
+    // 3️⃣  Create the item using the **parsed** features
+    const newItem = new RentItem({
       title,
       description,
       category,
-      images: [
-        {
-          url: result.secure_url,
-          public_id: result.public_id,
-        },
-      ],
-      pricePerHour,
+      images: [imageBlock],
+      pricePerHour: Number(pricePerHour),
       location,
       owner,
-      features,
+      features: parsedFeatures, // ← object/Map, not string
+      isRented: isRented || false,
     });
-    // save to DB
-    const savedItem = await newitem.save();
+
+    const savedItem = await newItem.save();
+
     res.status(201).json({
       success: true,
       data: savedItem,
       message: "Item created successfully!",
     });
   } catch (error) {
-    console.error(error);
+    console.error("addnewitem error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to create item",
@@ -47,36 +71,45 @@ exports.addnewitem = async (req, res) => {
     });
   }
 };
-//get all items
+
+// ───────────────────────────────
+// Get All Items
+// ───────────────────────────────
 exports.getallitems = async (req, res) => {
   try {
-    const allitems = await RentItem.find(); // fetch all the items in data base
-    if (!allitems) {
+    const allItems = await RentItem.find();
+
+    if (!allItems || allItems.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Item not avaible" });
+        .json({ success: false, message: "No items available" });
     }
+
     res.status(200).json({
       success: true,
-      data: allitems,
+      data: allItems,
       message: "Items fetched successfully!",
     });
   } catch (error) {
-    console.error(error);
-    res.status(200).json({
+    console.error("getallitems error:", error);
+    res.status(500).json({
       success: false,
       message: "Failed to get items",
       error: error.message,
     });
   }
 };
+
+// ───────────────────────────────
+// Update Item
+// ───────────────────────────────
 exports.updateItem = async (req, res) => {
   const itemId = req.params.id;
 
   try {
     const updatedItem = await RentItem.findByIdAndUpdate(itemId, req.body, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure data validation is applied
+      new: true,
+      runValidators: true,
     });
 
     if (!updatedItem) {
@@ -92,6 +125,7 @@ exports.updateItem = async (req, res) => {
       message: "Item updated successfully!",
     });
   } catch (error) {
+    console.error("updateItem error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to update item",
@@ -100,16 +134,20 @@ exports.updateItem = async (req, res) => {
   }
 };
 
-// delete item
+// ───────────────────────────────
+// Delete Item
+// ───────────────────────────────
 exports.deleteitem = async (req, res) => {
   const itemId = req.params.id;
+
   try {
     const deletedItem = await RentItem.findByIdAndDelete(itemId);
 
     if (!deletedItem) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Item not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
     }
 
     res.status(200).json({
@@ -118,10 +156,74 @@ exports.deleteitem = async (req, res) => {
       message: "Item deleted successfully!",
     });
   } catch (error) {
+    console.error("deleteitem error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to delete item",
       error: error.message,
+    });
+  }
+};
+
+// ───────────────────────────────
+// Rent Item
+// ───────────────────────────────
+exports.rentItem = async (req, res) => {
+  const itemId = req.params.id;
+  const userId = req.user.id;
+  const { returnDate } = req.body;
+
+  try {
+    const item = await RentItem.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    if (item.owner.toString() === userId) {
+      return res.status(400).json({
+        success: false,
+        message: "You can't rent your own item",
+      });
+    }
+
+    if (item.isRented) {
+      return res.status(400).json({
+        success: false,
+        message: "Item is already rented",
+      });
+    }
+
+    if (returnDate && new Date(returnDate) <= Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: "returnDate must be in the future",
+      });
+    }
+
+    const transaction = await RentalTransaction.create({
+      item: item._id,
+      renter: userId,
+      returnDate,
+    });
+
+    item.isRented = true;
+    await item.save();
+
+    res.status(200).json({
+      success: true,
+      data: transaction,
+      message: "Item rented successfully!",
+    });
+  } catch (err) {
+    console.error("rentItem error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to rent item",
+      error: err.message,
     });
   }
 };

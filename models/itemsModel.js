@@ -2,15 +2,9 @@ const mongoose = require("mongoose");
 
 const RentItemSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
+    // ─────────── Listing info ───────────
+    title: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
     category: {
       type: String,
       required: true,
@@ -28,32 +22,22 @@ const RentItemSchema = new mongoose.Schema(
     images: [
       {
         url: String,
-        public_id: String, // if using Cloudinary
+        public_id: String, // Cloudinary ID
       },
     ],
-    pricePerHour: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    location: {
-      type: String,
-      required: true,
-    },
-    isRented: {
-      type: Boolean,
-      default: false,
-    },
+    pricePerHour: { type: Number, required: true, min: 0 },
+    location: { type: String, required: true },
+    features: { type: Map, of: String, default: {} },
+
+    // ─────────── Ownership ───────────
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    features: {
-      type: Map,
-      of: String,
-      default: {},
-    },
+
+    // ─────────── Quick flag ───────────
+    isRented: { type: Boolean, default: false }, // ← set true when active rental exists
   },
   { timestamps: true }
 );

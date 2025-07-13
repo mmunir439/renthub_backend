@@ -9,13 +9,16 @@ app.use(express.json());
 //importing all routes here
 const userRoutes = require("./routes/userRoutes.js");
 const itemsRoutes = require("./routes/itemsroutes.js");
+const bookingRoutes = require("./routes/bookingRoutes");
 //importing middlesware
 const { verifyToken } = require("./middleware/authMiddleware.js");
 //routes
 app.use("/user", userRoutes);
 // app.use("/email", sendemail);
 // app.use("/emailtesting", emailRoutes);
-app.use("/items", verifyToken, itemsRoutes);
+app.use("/items", itemsRoutes);
+app.use("/bookings", bookingRoutes); // booking actions
+
 app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });

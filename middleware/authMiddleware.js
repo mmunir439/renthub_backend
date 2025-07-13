@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+
 exports.verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -7,10 +8,19 @@ exports.verifyToken = (req, res, next) => {
   }
 
   const token = authHeader.split(" ")[1];
-  console.log(token);
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // attach decoded data to request
+
+    // Accept both 'id' or '_id' from token
+    req.user = { _id: decoded._id || decoded.id };
+
+    if (!req.user._id) {
+      return res
+        .status(401)
+        .json({ message: "Token does not contain user ID" });
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });

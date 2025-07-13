@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const nodemailer = require("nodemailer");
@@ -107,4 +108,82 @@ exports.loginuser = async (req, res) => {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
   }
+};
+
+// ─────────────────────────────────────────
+// 1) “Forgot password” – generate + email link
+// ─────────────────────────────────────────
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  // Always reply the same: avoids email enumeration
+  if (!user) {
+    return res
+      .status(200)
+      .json({ message: "If the email exists, a reset link has been sent." });
+  }
+
+  const token = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // Link that your React / Next.js page will handle
+  const resetURL = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+  const html = `
+    <p>You requested a password reset for RentHub.</p>
+    <p>Click the button below within 15&nbsp;minutes:</p>
+    <a href="${resetURL}" style="padding:10px 18px;background:#007bff;color:#fff;text-decoration:none;border-radius:4px;">Reset Password</a>
+    <p>If you didn’t request this, just ignore this email.</p>
+  `;
+
+  try {
+    await sendEmail(user.email, "Reset your RentHub password", html);
+
+    // Show reset link directly in Postman if not in production
+    if (process.env.NODE_ENV !== "production") {
+      return res.json({
+        message: "Reset link (dev only)",
+        resetURL, // ← you'll see the token here
+      });
+    }
+
+    res.json({ message: "Check your email for the reset link." });
+  } catch (err) {
+    user.resetPasswordToken = user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(500).json({ message: "Email could not be sent." });
+  }
+};
+
+// ─────────────────────────────────────────
+// 2) “Reset password” – verify link + save new password
+// ─────────────────────────────────────────
+exports.resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const hashed = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashed,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: "Link is invalid or has expired." });
+  }
+
+  user.password = await bcrypt.hash(password, 10);
+  user.resetPasswordToken = user.resetPasswordExpire = undefined;
+  await user.save();
+
+  // (optional) Log them in immediately
+  const jwtToken = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  res.json({ message: "Password updated successfully.", token: jwtToken });
 };

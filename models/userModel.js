@@ -1,4 +1,3 @@
-// models/userModel.js
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 
@@ -7,6 +6,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["user", "admin"], default: "user" },
+
+  // ✅ Add photo field
+  photo: { type: String, default: "" },
 
   // ↓ NEW fields for password recovery
   resetPasswordToken: String,

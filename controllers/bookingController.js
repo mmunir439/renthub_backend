@@ -7,8 +7,9 @@ exports.createBooking = async (req, res) => {
   console.log("🔍 Incoming booking request");
   console.log("🧾 req.user:", req.user);
   console.log("📆 startTime:", startTime, "| endTime:", endTime);
+  const item = await RentItem.findById(req.params.rentitemId);
+  console.log("🔍 Checking item:", item);
 
-  const item = await RentItem.findById(req.params.itemId);
   if (!item) return res.status(404).json({ msg: "Item not found" });
 
   if (item.owner.equals(req.user._id)) {
@@ -41,6 +42,8 @@ exports.approveBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id).populate("item");
     if (!booking) return res.status(404).json({ msg: "Booking not found" });
+    if (!booking.item)
+      return res.status(404).json({ msg: "Item not found for this booking" });
 
     console.log("🔍 booking.item.owner:", booking.item.owner.toString());
     console.log("🔐 req.user._id:", req.user._id.toString());

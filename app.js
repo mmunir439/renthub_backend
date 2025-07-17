@@ -1,23 +1,42 @@
+const path = require("path");
+
 const express = require("express");
-const connectDB = require("./config/db.js"); // import data base file
+const cors = require("cors"); // ✅ Add this
+const connectDB = require("./config/db.js");
+
 const app = express();
-require("dotenv").config(); // for reading from env file
-// Connect to MongoDB
+require("dotenv").config();
+
 connectDB();
-//global middle ware to parse json that will run on every request
+app.use(
+  cors({
+    origin: "http://10.140.2.124:3000", // frontend IP:port
+    credentials: true,
+  })
+);
+
 app.use(express.json());
-//importing all routes here
+app.get("/test", (req, res) => {
+  res.send("User route working!");
+});
+
+// Routes
+const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes.js");
 const rentitemRoutes = require("./routes/rentitemRoutes.js");
 const bookingRoutes = require("./routes/bookingRoutes");
-//routes
+
+app.use("/admin", adminRoutes);
 app.use("/user", userRoutes);
 app.use("/rentitem", rentitemRoutes);
-app.use("/bookings", bookingRoutes); // booking actions
+app.use("/bookings", bookingRoutes);
+// ✅ Serve uploaded images statically
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`server is  runing on port:${port}`);
+
+const port = process.env.PORT || 3001;
+app.listen(5000, "0.0.0.0", () => {
+  console.log("Server running on port 5000");
 });

@@ -1,6 +1,5 @@
 const RentItem = require("../models/retnitemModel");
 const cloudinary = require("../config/cloudinary");
-
 // ───────────────────────────────
 // Add New Item
 // ───────────────────────────────
@@ -100,25 +99,106 @@ exports.getallitems = async (req, res) => {
     });
   }
 };
+exports.getitem = async (req, res) => {
+  const id = req.params.id;
 
+  try {
+    const item = await RentItem.findById(id);
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: item,
+      message: "Item fetched successfully!",
+    });
+  } catch (error) {
+    console.error("getitem error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get item",
+      error: error.message,
+    });
+  }
+};
+
+exports.munir = async (req, res) => {
+  res.send("hlo and how are you?");
+};
 // ───────────────────────────────
 // Update Item
 // ───────────────────────────────
+// controllers/itemController.js
 exports.updateItem = async (req, res) => {
   const itemId = req.params.id;
 
   try {
-    const updatedItem = await RentItem.findByIdAndUpdate(itemId, req.body, {
+    /* ─────── 1. Find the item first ─────── */
+    const item = await RentItem.findById(itemId);
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    /* ─────── 2. Owner‑only guard ─────── */
+    if (!item.owner.equals(req.user._id)) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+
+    /* ─────── 3. Build an update object ─────── */
+    const update = {};
+
+    // text fields may or may not be present
+    const fields = [
+      "title",
+      "description",
+      "category",
+      "pricePerHour",
+      "location",
+      "isRented",
+    ];
+    fields.forEach((f) => {
+      if (req.body[f] !== undefined) update[f] = req.body[f];
+    });
+
+    /* ─────── 4. Parse features if provided ─────── */
+    if (req.body.features !== undefined) {
+      update.features =
+        typeof req.body.features === "string"
+          ? JSON.parse(req.body.features)
+          : req.body.features;
+    }
+
+    /* ─────── 5. Optional new image upload ─────── */
+    if (req.file) {
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "renthub_items",
+        resource_type: "auto",
+      });
+
+      // If you want to REPLACE first image:
+      update["images.0"] = {
+        url: result.secure_url,
+        public_id: result.public_id,
+      };
+
+      // OR push a new image (keep the old ones):
+      // update.$push = { images: { url: result.secure_url, public_id: result.public_id } };
+    }
+
+    /* ─────── 6. Perform the update ─────── */
+    const updatedItem = await RentItem.findByIdAndUpdate(itemId, update, {
       new: true,
       runValidators: true,
     });
-
-    if (!updatedItem) {
-      return res.status(404).json({
-        success: false,
-        message: "Item not found",
-      });
-    }
 
     res.status(200).json({
       success: true,
@@ -166,65 +246,65 @@ exports.deleteitem = async (req, res) => {
   }
 };
 
-// ───────────────────────────────
-// Rent Item
-// ───────────────────────────────
-exports.rentItem = async (req, res) => {
-  const itemId = req.params.id;
-  const userId = req.user.id;
-  const { returnDate } = req.body;
+// // ───────────────────────────────
+// // Rent Item
+// // ───────────────────────────────
+// exports.rentItem = async (req, res) => {
+//   const itemId = req.params.id;
+//   const userId = req.user.id;
+//   const { returnDate } = req.body;
 
-  try {
-    const item = await RentItem.findById(itemId);
+//   try {
+//     const item = await RentItem.findById(itemId);
 
-    if (!item) {
-      return res.status(404).json({
-        success: false,
-        message: "Item not found",
-      });
-    }
+//     if (!item) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Item not found",
+//       });
+//     }
 
-    if (item.owner.toString() === userId) {
-      return res.status(400).json({
-        success: false,
-        message: "You can't rent your own item",
-      });
-    }
+//     if (item.owner.toString() === userId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "You can't rent your own item",
+//       });
+//     }
 
-    if (item.isRented) {
-      return res.status(400).json({
-        success: false,
-        message: "Item is already rented",
-      });
-    }
+//     if (item.isRented) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Item is already rented",
+//       });
+//     }
 
-    if (returnDate && new Date(returnDate) <= Date.now()) {
-      return res.status(400).json({
-        success: false,
-        message: "returnDate must be in the future",
-      });
-    }
+//     if (returnDate && new Date(returnDate) <= Date.now()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "returnDate must be in the future",
+//       });
+//     }
 
-    const transaction = await RentalTransaction.create({
-      item: item._id,
-      renter: userId,
-      returnDate,
-    });
+//     const transaction = await RentalTransaction.create({
+//       item: item._id,
+//       renter: userId,
+//       returnDate,
+//     });
 
-    item.isRented = true;
-    await item.save();
+//     item.isRented = true;
+//     await item.save();
 
-    res.status(200).json({
-      success: true,
-      data: transaction,
-      message: "Item rented successfully!",
-    });
-  } catch (err) {
-    console.error("rentItem error:", err);
-    res.status(500).json({
-      success: false,
-      message: "Failed to rent item",
-      error: err.message,
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       data: transaction,
+//       message: "Item rented successfully!",
+//     });
+//   } catch (err) {
+//     console.error("rentItem error:", err);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to rent item",
+//       error: err.message,
+//     });
+//   }
+// };

@@ -10,11 +10,11 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    origin: "http://10.140.2.124:3000", // frontend IP:port
-    credentials: true,
+    origin: process.env.FRONTEND_URL, // use your .env value
+    credentials: true, // if you are using cookies or auth headers
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-
 app.use(express.json());
 app.get("/test", (req, res) => {
   res.send("User route working!");
@@ -36,7 +36,6 @@ app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });
 
-const port = process.env.PORT || 3001;
-app.listen(5000, "0.0.0.0", () => {
-  console.log("Server running on port 5000");
+app.listen(process.env.PORT, () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 });

@@ -3,9 +3,11 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
-const nodemailer = require("nodemailer");
-const { sendEmail } = require("../utils/email"); // ← import our util function
-// Get currently logged-in user (based on token)
+const { sendEmail } = require("../utils/email"); // Email utility function
+
+// ─────────────────────────────────────────
+// Get currently logged-in user info (via token)
+// ─────────────────────────────────────────
 exports.me = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -30,62 +32,50 @@ exports.me = async (req, res) => {
   }
 };
 
-//  REGISTER ROUTE
-
+// ─────────────────────────────────────────
+// Register a new user 
+// ─────────────────────────────────────────
 exports.registeruser = async (req, res) => {
   const { name, email, password } = req.body;
-  const photo = req.file ? req.file.filename : null;
 
   try {
+    // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create and save the new user
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      photo, // ✅ Add this line to store the uploaded file name
     });
 
     const savedUser = await newUser.save();
 
+    // ✅ Welcome email content
     const html = `
-  <div style="font-family: sans-serif; line-height: 1.6;">
-    <h2>Hello, ${savedUser.name}!</h2>
-    <p>Welcome to <strong>RentHub</strong> — the marketplace for renting and listing items safely and quickly.</p>
-    <p>Here’s what you can do:</p>
-    <ul>
-      <li> List your items and earn money.</li>
-      <li> Browse thousands of items to rent at affordable prices.</li>
-      <li> Connect safely with other users.</li>
-    </ul>
-    <p>We’re excited to have you join the RentHub community.</p>
-    <p>Click below to get started:</p>
-    <p>
-      <a 
-        href="https://www.renthub.com" // here replace with website name
-        style="
-          display: inline-block;
-          background-color: #007bff;
-          color: #fff;
-          padding: 10px 20px;
-          text-decoration: none;
-          border-radius: 4px;
-        ">
-        Visit RentHub
-      </a>
-    </p>
-    <p>Happy Renting!</p>
-    <p>- The RentHub Team</p>
-  </div>
-`;
+      <div style="font-family: sans-serif; line-height: 1.6;">
+        <h2>Hello, ${savedUser.name}!</h2>
+        <p>Welcome to <strong>RentHub</strong> — the marketplace for renting and listing items safely and quickly.</p>
+        <ul>
+          <li>List your items and earn money.</li>
+          <li>Browse thousands of items to rent at affordable prices.</li>
+          <li>Connect safely with other users.</li>
+        </ul>
+        <p>We’re excited to have you join the RentHub community.</p>
+        <a href="https://www.renthub.com" style="display:inline-block;background-color:#007bff;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">Visit RentHub</a>
+        <p>Happy Renting!</p>
+        <p>- The RentHub Team</p>
+      </div>
+    `;
 
-    // send the email
-    await sendEmail(savedUser.email, "Welcome to My App!", html);
+    // Send welcome email
+    await sendEmail(savedUser.email, "Welcome to RentHub!", html);
 
     res.status(201).json({
       success: true,
@@ -101,6 +91,10 @@ exports.registeruser = async (req, res) => {
     });
   }
 };
+
+// ─────────────────────────────────────────
+// Login user
+// ─────────────────────────────────────────
 exports.loginuser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -114,6 +108,7 @@ exports.loginuser = async (req, res) => {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
+  // Generate JWT token
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
@@ -133,23 +128,23 @@ exports.loginuser = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// 1) “Forgot password” – generate + email link
+// Forgot password – send reset link
 // ─────────────────────────────────────────
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
 
-  // Always reply the same: avoids email enumeration
+  // Always reply the same to prevent email enumeration
   if (!user) {
-    return res
-      .status(200)
-      .json({ message: "If the email exists, a reset link has been sent." });
+    return res.status(200).json({
+      message: "If the email exists, a reset link has been sent.",
+    });
   }
 
+  // Create secure token
   const token = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // Link that your React / Next.js page will handle
   const resetURL = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
   const html = `
@@ -162,11 +157,10 @@ exports.forgotPassword = async (req, res) => {
   try {
     await sendEmail(user.email, "Reset your RentHub password", html);
 
-    // Show reset link directly in Postman if not in production
     if (process.env.NODE_ENV !== "production") {
       return res.json({
         message: "Reset link (dev only)",
-        resetURL, // ← you'll see the token here
+        resetURL,
       });
     }
 
@@ -179,7 +173,7 @@ exports.forgotPassword = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// 2) “Reset password” – verify link + save new password
+// Reset password – validate token and save new password
 // ─────────────────────────────────────────
 exports.resetPassword = async (req, res) => {
   const { token } = req.params;
@@ -200,7 +194,6 @@ exports.resetPassword = async (req, res) => {
   user.resetPasswordToken = user.resetPasswordExpire = undefined;
   await user.save();
 
-  // (optional) Log them in immediately
   const jwtToken = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
@@ -209,6 +202,10 @@ exports.resetPassword = async (req, res) => {
 
   res.json({ message: "Password updated successfully.", token: jwtToken });
 };
+
+// ─────────────────────────────────────────
+// Admin creation – manually create an admin user
+// ─────────────────────────────────────────
 exports.createAdmin = async (req, res) => {
   try {
     const { name, email, password } = req.body;

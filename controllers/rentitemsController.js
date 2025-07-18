@@ -1,5 +1,7 @@
 const RentItem = require("../models/retnitemModel");
 const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
+
 // ───────────────────────────────
 // Add New Item
 // ───────────────────────────────
@@ -8,7 +10,7 @@ exports.addnewitem = async (req, res) => {
     title,
     description,
     category,
-    images,
+    image,
     pricePerHour,
     location,
     features, // ← still a string right now
@@ -34,12 +36,19 @@ exports.addnewitem = async (req, res) => {
   try {
     // 2️⃣  Handle the (optional) image
     let imageBlock = { url: "", public_id: "" };
+
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "renthub_items",
-        resource_type: "auto",
+        folder: "renthub_items", // You can change this folder name
       });
-      imageBlock = { url: result.secure_url, public_id: result.public_id };
+
+      imageBlock = {
+        url: result.secure_url,
+        public_id: result.public_id,
+      };
+
+      // Optional: delete the local file after upload
+      fs.unlinkSync(req.file.path);
     }
 
     // 3️⃣  Create the item using the **parsed** features
@@ -47,7 +56,7 @@ exports.addnewitem = async (req, res) => {
       title,
       description,
       category,
-      images: [imageBlock],
+      image: [imageBlock],
       pricePerHour: Number(pricePerHour),
       location,
       owner,
@@ -185,13 +194,13 @@ exports.updateItem = async (req, res) => {
       });
 
       // If you want to REPLACE first image:
-      update["images.0"] = {
+      update["image.0"] = {
         url: result.secure_url,
         public_id: result.public_id,
       };
 
       // OR push a new image (keep the old ones):
-      // update.$push = { images: { url: result.secure_url, public_id: result.public_id } };
+      // update.$push = { image: { url: result.secure_url, public_id: result.public_id } };
     }
 
     /* ─────── 6. Perform the update ─────── */

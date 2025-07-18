@@ -19,7 +19,7 @@ const RentItemSchema = new mongoose.Schema(
         "Other",
       ],
     },
-    images: [
+    image: [
       {
         url: String,
         public_id: String, // Cloudinary ID

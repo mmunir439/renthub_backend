@@ -10,9 +10,8 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // use your .env value
-    credentials: true, // if you are using cookies or auth headers
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "http://localhost:3000",
+    credentials: true, // if using cookies/auth tokens
   })
 );
 app.use(express.json());

@@ -4,18 +4,19 @@ const multer = require("multer");
 const upload = multer({ dest: "uploads/" }); // or configure storage if needed
 
 const {
+  munir,
   addnewitem,
   getallitems,
   updateItem,
+  getitem,
   deleteitem,
   rentItem,
-  munir,
 } = require("../controllers/rentitemsController");
 const { protect } = require("../middleware/authMiddleware");
 //  Public route to get all the items
-router.get("/", getallitems);
-router.get("/:id", getallitems);
 router.get("/check", munir);
+router.get("/", getallitems);
+router.get("/:id", getitem);
 // Protected routes
 router.post("/additem", protect, upload.single("image"), addnewitem);
 router.put("/updateItem/:id", protect, updateItem);

@@ -1,8 +1,7 @@
-const Booking = require("../models/tookonRent");
-const RentItem = require("../models/retnitemModel"); // Check this name if it's correct
-
+const retnitemModel = require("../models/retnitemModel"); // Check this name if it's correct
+const tookitemModel = require("../models/tookonRent"); // Check this name if it's correct
 // POST /tookonRent/:rentitemId
-exports.tookonRent = async (req, res) => {
+exports.Tookrentforbook = async (req, res) => {
   try {
     const { startTime, endTime } = req.body;
     const { rentitemId } = req.params;
@@ -11,7 +10,9 @@ exports.tookonRent = async (req, res) => {
     console.log("📩 Booking request received by user:", userId);
 
     // 1. Check if the item exists
-    const item = await RentItem.findById(rentitemId);
+    // const item = await RentItem.findById(rentitemId);
+    const item = await retnitemModel.findById(rentitemId);
+
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
@@ -41,7 +42,7 @@ exports.tookonRent = async (req, res) => {
     };
 
     // 4. Create booking
-    const booking = await Booking.create(bookingData);
+    const booking = await tookitemModel.create(bookingData);
 
     // 5. Mark item as rented
     item.isRented = true;
@@ -65,7 +66,8 @@ exports.tookonRent = async (req, res) => {
 // GET /tookonRent/my
 exports.getMyRentedItems = async (req, res) => {
   try {
-    const bookings = await Booking.find({ renter: req.user._id })
+    const bookings = await tookitemModel
+      .find({ renter: req.user._id })
       .populate("item", "title image pricePerHour location")
       .sort({ createdAt: -1 });
 

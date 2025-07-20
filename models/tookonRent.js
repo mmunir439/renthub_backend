@@ -1,8 +1,7 @@
-// models/bookingModel.js
-const mongoose = require("mongoose"); // ← Import Mongoose so we can define a schema
+const mongoose = require("mongoose");
 
 // ─────────────── Schema Definition ───────────────
-const TookonRent = new mongoose.Schema(
+const tookrent = new mongoose.Schema(
   {
     /* -------------------------------------------------
      * References (relations to other collections)
@@ -25,17 +24,13 @@ const TookonRent = new mongoose.Schema(
     /* -------------------------------------------------
      * Rental period
      * ------------------------------------------------- */
-
-    // Rental start date & time
     startTime: {
-      type: Date,
-      required: true, // Needed to calculate duration
+      type: Number, // e.g. 9
+      required: true,
     },
-
-    // Rental end date & time
     endTime: {
-      type: Date,
-      required: true, // Needed to calculate duration
+      type: Number, // e.g. 13
+      required: true,
     },
 
     /* -------------------------------------------------
@@ -74,4 +69,4 @@ const TookonRent = new mongoose.Schema(
     timestamps: true, // Automatically adds createdAt and updatedAt fields
   }
 );
-module.exports = mongoose.model("Tookonrent", TookonRent);
+module.exports = mongoose.model("TookOnRent", tookrent);

@@ -1,13 +1,7 @@
 const express = require("express");
+const { protect } = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/isAdmin");
 const router = express.Router();
 const adminController = require("../controllers/adminController");
-const auth = require("../middleware/authMiddleware");
-const { restrictTo } = require("../middleware/authorize");
-const { protect } = require("../middleware/authMiddleware");
-// Protect all routes: only authenticated admins can access
-router.use(protect, restrictTo("admin"));
-router.get("/users", adminController.getAllUsers);
-// router.delete("/users/:id", adminController.deleteUser);
-// router.put("/users/:id/role", adminController.updateUserRole);
-
+router.get("/getalluser", adminController.getAllUsers);
 module.exports = router;

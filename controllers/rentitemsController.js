@@ -17,19 +17,20 @@ exports.addnewitem = async (req, res) => {
     isRented,
   } = req.body;
 
-  // 1️⃣  Parse features if it’s a string
-  let parsedFeatures = features;
-  if (typeof features === "string") {
-    try {
-      parsedFeatures = JSON.parse(features); // now it’s an object
-    } catch (err) {
-      return res.status(400).json({
-        success: false,
-        message:
-          'The ‘features’ field must be valid JSON (e.g. { "battery":"Extra Battery" }).',
-      });
-    }
-  }
+  // // 1️⃣  Parse features if it’s a string
+  // let parsedFeatures = features;
+  // if (typeof features === "string") {
+  //   try {
+  //     parsedFeatures = JSON.parse(features); // now it’s an object
+  //   } catch (err) {
+  //     return res.status(400).json({
+  //       success: false,
+  //       message:
+  //         'The ‘features’ field must be valid JSON (e.g. { "battery":"Extra Battery" }).',
+  //     });
+  //   }
+  // }
+  const parsedFeatures = features; // Just keep it as-is, a paragraph string
 
   const owner = req.user.id;
 
@@ -179,10 +180,7 @@ exports.updateItem = async (req, res) => {
 
     /* ─────── 4. Parse features if provided ─────── */
     if (req.body.features !== undefined) {
-      update.features =
-        typeof req.body.features === "string"
-          ? JSON.parse(req.body.features)
-          : req.body.features;
+      update.features = req.body.features; // Just update the string
     }
 
     /* ─────── 5. Optional new image upload ─────── */

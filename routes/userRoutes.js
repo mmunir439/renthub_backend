@@ -3,6 +3,7 @@ const router = express.Router();
 
 // ✅ Removed multer middleware import (no photo now)
 const { protect } = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/isAdmin");
 const userController = require("../controllers/userController");
 
 // REGISTER (no photo now)
@@ -22,5 +23,7 @@ router.post("/forgotPassword", userController.forgotPassword);
 
 // RESET PASSWORD
 router.post("/resetPassword/:token", userController.resetPassword);
+// only admin ca acces this route
+router.get("/", protect, restrictTo("admin"), userController.getAllUsers);
 
 module.exports = router;

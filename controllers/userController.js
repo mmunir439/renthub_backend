@@ -247,3 +247,21 @@ exports.createAdmin = async (req, res) => {
     });
   }
 };
+// ─────────────────────────────────────────
+// Get all users (Admin only)
+// ─────────────────────────────────────────
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); // Hide passwords
+    res.status(200).json({
+      message: "All users fetched successfully.",
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch users.",
+      error: error.message,
+    });
+  }
+};

@@ -27,7 +27,7 @@ const RentItemSchema = new mongoose.Schema(
     ],
     pricePerHour: { type: Number, required: true, min: 0 },
     location: { type: String, required: true },
-    features: { type: Map, of: String, default: {} },
+    features: { type: String, maxlength: 3000, default: "" },
 
     // ─────────── Ownership ───────────
     owner: {

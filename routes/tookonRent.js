@@ -1,10 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { tookonRent, getMyRentedItems } = require("../controllers/tookonRent");
+const {
+  Tookrentforbook,
+  getMyRentedItems,
+} = require("../controllers/tookonRent");
 const { protect } = require("../middleware/authMiddleware");
 
 // 🔒 Only logged-in users can rent or view rented items
-router.post("/:rentitemId", protect, tookonRent);
+router.post("/:rentitemId", protect, Tookrentforbook);
 router.get("/my", protect, getMyRentedItems); // ➕ added route to get user's bookings
 
 // Simple test route

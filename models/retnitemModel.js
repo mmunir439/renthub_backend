@@ -35,6 +35,11 @@ const RentItemSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending", // Automatically pending when posted
+    },
 
     // ─────────── Quick flag ───────────
     isRented: { type: Boolean, default: false }, // ← set true when active rental exists

@@ -9,12 +9,16 @@ exports.Tookrentforbook = async (req, res) => {
 
     console.log("📩 Booking request received by user:", userId);
 
-    // 1. Check if the item exists
-    // const item = await RentItem.findById(rentitemId);
-    const item = await retnitemModel.findById(rentitemId);
+    // 1. Check if the item exists and is approved
+    const item = await retnitemModel.findOne({
+      _id: rentitemId,
+      status: "approved",
+    });
 
     if (!item) {
-      return res.status(404).json({ message: "Item not found" });
+      return res
+        .status(404)
+        .json({ message: "Item not found or not approved by admin." });
     }
 
     // 2. Prevent owner from renting their own item

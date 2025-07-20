@@ -1,16 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const {
-  tookonRent,
-  getMyBookings,
-  approveBooking,
-  rejectBooking,
-} = require("../controllers/tookonRent");
+const { tookonRent, getMyRentedItems } = require("../controllers/tookonRent");
 const { protect } = require("../middleware/authMiddleware");
-// router.get("/", (req, res) => {
-//   res.send("this booking is done now");
-// });
+
+// 🔒 Only logged-in users can rent or view rented items
 router.post("/:rentitemId", protect, tookonRent);
-router.get("/my", protect, getMyBookings);
+router.get("/my", protect, getMyRentedItems); // ➕ added route to get user's bookings
+
+// Simple test route
+router.get("/", (req, res) => {
+  res.send("✅ Took on rent route working");
+});
 
 module.exports = router;

@@ -2,7 +2,7 @@
 const mongoose = require("mongoose"); // ← Import Mongoose so we can define a schema
 
 // ─────────────── Schema Definition ───────────────
-const bookingSchema = new mongoose.Schema(
+const TookonRent = new mongoose.Schema(
   {
     /* -------------------------------------------------
      * References (relations to other collections)
@@ -74,8 +74,4 @@ const bookingSchema = new mongoose.Schema(
     timestamps: true, // Automatically adds createdAt and updatedAt fields
   }
 );
-
-// ─────────────── Model Export ───────────────
-// Exports a Mongoose model called "Booking" based on bookingSchema.
-// Now you can do Booking.create(), Booking.find(), etc.
-module.exports = mongoose.model("Booking", bookingSchema);
+module.exports = mongoose.model("Tookonrent", TookonRent);

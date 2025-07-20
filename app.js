@@ -1,5 +1,4 @@
 const path = require("path");
-
 const express = require("express");
 const cors = require("cors"); // ✅ Add this
 const connectDB = require("./config/db.js");
@@ -10,8 +9,8 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    // origin: "http://localhost:3000",
-    origin: process.env.FRONTEND_URL,
+    origin: "http://localhost:3000",
+    // origin: process.env.FRONTEND_URL,
     credentials: true, // if using cookies/auth tokens
   })
 );

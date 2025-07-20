@@ -1,91 +1,81 @@
-const tookonRent = require("../models/tookonRent");
-const RentItem = require("../models/retnitemModel");
+const Booking = require("../models/tookonRent");
+const RentItem = require("../models/retnitemModel"); // Check this name if it's correct
 
-///bookings/:itemId
+// POST /tookonRent/:rentitemId
 exports.tookonRent = async (req, res) => {
-  const { startTime, endTime } = req.body;
-  console.log("🔍 Incoming booking request");
-  console.log("🧾 req.user:", req.user);
-  console.log("📆 startTime:", startTime, "| endTime:", endTime);
-  const item = await RentItem.findById(req.params.rentitemId);
-  console.log("🔍 Checking item:", item);
-
-  if (!item) return res.status(404).json({ msg: "Item not found" });
-
-  if (item.owner.equals(req.user._id)) {
-    return res.status(400).json({ msg: "Cannot rent your own item" });
-  }
-
-  const hours = (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
-  const bookingData = {
-    item: item._id,
-    renter: req.user._id,
-    startTime,
-    endTime,
-    totalHours: hours,
-    totalPrice: hours * item.pricePerHour,
-  };
-
-  console.log("📦 Booking payload to be created:", bookingData);
-
   try {
-    const booking = await Booking.create(bookingData);
-    res.status(201).json(booking);
-  } catch (error) {
-    console.error("❌ Booking creation error:", error);
-    res.status(500).json({ msg: "Booking failed", error: error.message });
-  }
-};
+    const { startTime, endTime } = req.body;
+    const { rentitemId } = req.params;
+    const userId = req.user._id;
 
-// PATCH /api/bookings/:id/approve
-exports.approveBooking = async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id).populate("item");
-    if (!booking) return res.status(404).json({ msg: "Booking not found" });
-    if (!booking.item)
-      return res.status(404).json({ msg: "Item not found for this booking" });
+    console.log("📩 Booking request received by user:", userId);
 
-    console.log("🔍 booking.item.owner:", booking.item.owner.toString());
-    console.log("🔐 req.user._id:", req.user._id.toString());
-
-    if (!booking.item.owner.equals(req.user._id)) {
-      return res.status(403).json({ msg: "Not authorized" });
+    // 1. Check if the item exists
+    const item = await RentItem.findById(rentitemId);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
     }
 
-    booking.status = "approved";
-    await booking.save();
+    // 2. Prevent owner from renting their own item
+    if (item.owner.toString() === userId.toString()) {
+      return res
+        .status(400)
+        .json({ message: "You cannot rent your own item." });
+    }
 
-    booking.item.isRented = true;
-    await booking.item.save();
+    // 3. Calculate hours and total price
+    const hours = (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
+    if (hours <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid rental duration provided." });
+    }
 
-    res.json({ msg: "Booking approved" });
+    const bookingData = {
+      item: item._id,
+      renter: userId,
+      startTime,
+      endTime,
+      totalHours: hours,
+      totalPrice: hours * item.pricePerHour,
+    };
+
+    // 4. Create booking
+    const booking = await Booking.create(bookingData);
+
+    // 5. Mark item as rented
+    item.isRented = true;
+    await item.save();
+
+    console.log("✅ Booking successful:", booking._id);
+
+    res.status(201).json({
+      message: "Item rented successfully",
+      booking,
+    });
   } catch (err) {
-    console.error("❌ Error in approveBooking:", err);
-    res.status(500).json({ msg: "Server error" });
+    console.error("❌ Booking error:", err);
+    res.status(500).json({
+      message: "Server error while booking item",
+      error: err.message,
+    });
   }
 };
 
-// PATCH /api/bookings/:id/reject
-exports.rejectBooking = async (req, res) => {
-  const booking = await Booking.findById(req.params.id).populate("item");
-  if (!booking) return res.status(404).json({ msg: "Booking not found" });
-  if (!booking.item.owner.equals(req.user._id))
-    return res.status(403).json({ msg: "Not authorized" });
-
-  booking.status = "rejected";
-  await booking.save();
-  res.json({ msg: "Booking rejected" });
-};
-// GET /api/bookings/my
-exports.getMyBookings = async (req, res) => {
+// GET /tookonRent/my
+exports.getMyRentedItems = async (req, res) => {
   try {
     const bookings = await Booking.find({ renter: req.user._id })
       .populate("item", "title image pricePerHour location")
       .sort({ createdAt: -1 });
 
-    res.json({ bookings });
+    res.json({
+      message: "My rented items fetched successfully",
+      count: bookings.length,
+      bookings,
+    });
   } catch (err) {
-    console.error("Error fetching user bookings:", err);
-    res.status(500).json({ msg: "Server error" });
+    console.error("❌ Fetching my bookings error:", err);
+    res.status(500).json({ message: "Failed to fetch your bookings" });
   }
 };

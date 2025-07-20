@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const {
-  createBooking,
+  tookonRent,
+  getMyBookings,
   approveBooking,
   rejectBooking,
-} = require("../controllers/bookingController");
+} = require("../controllers/tookonRent");
 const { protect } = require("../middleware/authMiddleware");
 // router.get("/", (req, res) => {
 //   res.send("this booking is done now");
 // });
-router.post("/:rentitemId", protect, createBooking); // rent item
-// router.patch("/:id/approve", protect, approveBooking); // owner action
-// router.patch("/:id/reject", protect, rejectBooking); // owner action
+router.post("/:rentitemId", protect, tookonRent);
+router.get("/my", protect, getMyBookings);
 
 module.exports = router;

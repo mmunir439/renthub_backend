@@ -10,6 +10,7 @@ const {
   updateItem,
   getitem,
   deleteitem,
+  getRentedItems,
   rentItem,
 } = require("../controllers/rentitemsController");
 const { protect } = require("../middleware/authMiddleware");
@@ -21,5 +22,7 @@ router.get("/:id", getitem);
 router.post("/additem", protect, upload.single("image"), addnewitem);
 router.put("/updateItem/:id", protect, updateItem);
 router.delete("/deleteitem/:id", protect, deleteitem);
+router.get("/myrented", protect, getRentedItems);
+
 // router.post("/rent/:id", protect, rentItem);
 module.exports = router;

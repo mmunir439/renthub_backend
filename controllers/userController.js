@@ -33,10 +33,10 @@ exports.me = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// Register a new user 
+// Register a new user
 // ─────────────────────────────────────────
 exports.registeruser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone, address } = req.body;
 
   try {
     // Check if email already exists
@@ -53,6 +53,8 @@ exports.registeruser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      phone, // ✅
+      address,
     });
 
     const savedUser = await newUser.save();
@@ -123,6 +125,8 @@ exports.loginuser = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      address: user.address,
+      phone: user.phone,
     },
   });
 };
@@ -208,20 +212,20 @@ exports.resetPassword = async (req, res) => {
 // ─────────────────────────────────────────
 exports.createAdmin = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
+    const { name, email, password, phone, address } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-
     const admin = await User.create({
       name,
       email,
       password: hashedPassword,
       role: "admin",
+      phone, // Optional
+      address, // Optional
     });
 
     console.log("Admin user created.");

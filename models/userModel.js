@@ -13,9 +13,17 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true, // Email must be unique
   },
+  phone: {
+    type: String,
+    required: true,
+    unique: true, // Email must be unique
+  },
   password: {
     type: String,
     required: true,
+  },
+  address: {
+    type: String,
   },
 
   // Role: "user" or "admin"
@@ -30,14 +38,6 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 });
 
-/**
- * ✅ Instance method: Create a secure token for password reset
- * - Generates a random 32-byte token (hex string)
- * - Hashes it using SHA-256
- * - Stores hash in DB (not raw token!)
- * - Sets expiration time (15 mins from now)
- * - Returns raw token (you can email this to the user)
- */
 userSchema.methods.createPasswordResetToken = function () {
   const rawToken = crypto.randomBytes(32).toString("hex"); // Unhashed token (to email)
 
@@ -52,6 +52,4 @@ userSchema.methods.createPasswordResetToken = function () {
 
   return rawToken;
 };
-
-// ✅ Export model
 module.exports = mongoose.model("User", userSchema);

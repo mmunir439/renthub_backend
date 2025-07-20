@@ -134,7 +134,7 @@ exports.getitem = async (req, res) => {
     });
   }
 };
-//just for testing purpose only 
+//just for testing purpose only
 exports.munir = async (req, res) => {
   res.send("hlo and how are you?");
 };
@@ -250,6 +250,25 @@ exports.deleteitem = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete item",
+      error: error.message,
+    });
+  }
+};
+// GET /items/rented — Get all rented items
+exports.getRentedItems = async (req, res) => {
+  try {
+    const rentedItems = await RentItem.find({ isRented: true });
+
+    res.status(200).json({
+      success: true,
+      data: rentedItems,
+      message: "All rented items fetched successfully",
+    });
+  } catch (error) {
+    console.error("getRentedItems error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch rented items",
       error: error.message,
     });
   }

@@ -1,8 +1,8 @@
-const Booking = require("../models/bookingModel");
+const tookonRent = require("../models/tookonRent");
 const RentItem = require("../models/retnitemModel");
 
 ///bookings/:itemId
-exports.createBooking = async (req, res) => {
+exports.tookonRent = async (req, res) => {
   const { startTime, endTime } = req.body;
   console.log("🔍 Incoming booking request");
   console.log("🧾 req.user:", req.user);
@@ -75,4 +75,17 @@ exports.rejectBooking = async (req, res) => {
   booking.status = "rejected";
   await booking.save();
   res.json({ msg: "Booking rejected" });
+};
+// GET /api/bookings/my
+exports.getMyBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ renter: req.user._id })
+      .populate("item", "title image pricePerHour location")
+      .sort({ createdAt: -1 });
+
+    res.json({ bookings });
+  } catch (err) {
+    console.error("Error fetching user bookings:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
 };

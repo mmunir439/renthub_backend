@@ -10,7 +10,8 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    // origin: "http://localhost:3000",
+    origin: "https://rentistaan-front.vercel.app/",
     credentials: true, // if using cookies/auth tokens
   })
 );
@@ -23,12 +24,12 @@ app.get("/test", (req, res) => {
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes.js");
 const rentitemRoutes = require("./routes/rentitemRoutes.js");
-const bookingRoutes = require("./routes/bookingRoutes");
+const tookonRent = require("./routes/tookonRent.js");
 
 app.use("/admin", adminRoutes);
 app.use("/user", userRoutes);
 app.use("/rentitem", rentitemRoutes);
-app.use("/bookings", bookingRoutes);
+app.use("/tookonRent", tookonRent);
 // ✅ Serve uploaded images statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
@@ -36,5 +37,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+  console.log(
+    `Server running on port ${process.env.PORT} and data base ${process.env.MONGO_URI}`
+  );
 });

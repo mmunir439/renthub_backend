@@ -11,7 +11,7 @@ connectDB();
 app.use(
   cors({
     // origin: "http://localhost:3000",
-    origin: "https://rentistaan-front.vercel.app/",
+    origin: process.env.FRONTEND_URL,
     credentials: true, // if using cookies/auth tokens
   })
 );

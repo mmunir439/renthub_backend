@@ -7,9 +7,16 @@ exports.Tookrentforbook = async (req, res) => {
     const { rentitemId } = req.params;
     const userId = req.user._id;
 
+    // ❌ Prevent admin from booking
+    if (req.user.role === "admin") {
+      return res.status(403).json({
+        message: "Admins are not allowed to rent items.",
+      });
+    }
+
     console.log("📩 Booking request received by user:", userId);
 
-    // 1. Check if the item exists and is approved
+    // ✅ Find the item and make sure it's approved
     const item = await retnitemModel.findOne({
       _id: rentitemId,
       status: "approved",
@@ -21,20 +28,26 @@ exports.Tookrentforbook = async (req, res) => {
         .json({ message: "Item not found or not approved by admin." });
     }
 
-    // 2. Prevent owner from renting their own item
+    // ❌ Prevent owner from renting their own item
     if (item.owner.toString() === userId.toString()) {
       return res
         .status(400)
         .json({ message: "You cannot rent your own item." });
     }
 
-    // 3. Calculate hours and total price
-    const hours = (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
-    if (hours <= 0) {
+    // ✅ Calculate duration in hours
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const hours = (end - start) / (1000 * 60 * 60); // milliseconds → hours
+
+    if (isNaN(hours) || hours <= 0) {
       return res
         .status(400)
         .json({ message: "Invalid rental duration provided." });
     }
+
+    // ✅ Calculate total price
+    const totalPrice = hours * item.pricePerHour;
 
     const bookingData = {
       item: item._id,
@@ -42,13 +55,13 @@ exports.Tookrentforbook = async (req, res) => {
       startTime,
       endTime,
       totalHours: hours,
-      totalPrice: hours * item.pricePerHour,
+      totalPrice,
     };
 
-    // 4. Create booking
+    // ✅ Create booking
     const booking = await tookitemModel.create(bookingData);
 
-    // 5. Mark item as rented
+    // ✅ Mark item as rented
     item.isRented = true;
     await item.save();
 
@@ -66,9 +79,19 @@ exports.Tookrentforbook = async (req, res) => {
     });
   }
 };
+
 // GET /tookonRent/my
 exports.getMyRentedItems = async (req, res) => {
   try {
+    // ⛔ Prevent admin from accessing this
+    if (req.user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admins are not allowed to rent items.",
+      });
+    } //
+
+    // ✅ Now this part will run only if the user is not an admin
     const bookings = await tookitemModel
       .find({ renter: req.user._id })
       .populate("item", "title image pricePerHour location")

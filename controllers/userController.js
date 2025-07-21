@@ -265,3 +265,48 @@ exports.getAllUsers = async (req, res) => {
     });
   }
 };
+// ─────────────────────────────────────────
+// Update profile – only for logged-in user
+// ─────────────────────────────────────────
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, email, phone, address, password } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Update fields if provided
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (address) user.address = address;
+
+    // Handle password update
+    if (password) {
+      const hashed = await bcrypt.hash(password, 10);
+      user.password = hashed;
+    }
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully.",
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        address: updatedUser.address,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update profile.",
+      error: error.message,
+    });
+  }
+};

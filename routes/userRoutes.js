@@ -9,8 +9,8 @@ const userController = require("../controllers/userController");
 // REGISTER (no photo now)
 router.post("/register", userController.registeruser);
 
-// CREATE ADMIN
-router.post("/create-admin", userController.createAdmin);
+// // CREATE ADMIN
+// router.post("/create-admin", userController.createAdmin);
 
 // LOGIN
 router.post("/login", userController.loginuser);
@@ -20,6 +20,8 @@ router.get("/me", protect, userController.me);
 
 // FORGOT PASSWORD
 router.post("/forgotPassword", userController.forgotPassword);
+// Update user profile
+router.put("/update-profile", protect, userController.updateUserProfile);
 
 // RESET PASSWORD
 router.post("/resetPassword/:token", userController.resetPassword);

@@ -21,5 +21,10 @@ router.get(
   restrictTo("admin"),
   adminController.tookallrented
 );
-
+router.put(
+  "/updateBookingStatus/:bookingId",
+  protect,
+  restrictTo("admin"),
+  adminController.updateBookingStatus
+);
 module.exports = router;

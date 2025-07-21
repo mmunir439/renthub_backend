@@ -16,20 +16,6 @@ exports.addnewitem = async (req, res) => {
     features, // ← still a string right now
     isRented,
   } = req.body;
-
-  // // 1️⃣  Parse features if it’s a string
-  // let parsedFeatures = features;
-  // if (typeof features === "string") {
-  //   try {
-  //     parsedFeatures = JSON.parse(features); // now it’s an object
-  //   } catch (err) {
-  //     return res.status(400).json({
-  //       success: false,
-  //       message:
-  //         'The ‘features’ field must be valid JSON (e.g. { "battery":"Extra Battery" }).',
-  //     });
-  //   }
-  // }
   const parsedFeatures = features; // Just keep it as-is, a paragraph string
 
   const owner = req.user.id;
@@ -77,6 +63,26 @@ exports.addnewitem = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to create item",
+      error: error.message,
+    });
+  }
+};
+// GET /rentitem/my — Fetch only items posted by the current user
+exports.getMyPostedItems = async (req, res) => {
+  try {
+    const myItems = await RentItem.find({ owner: req.user._id }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: myItems.length,
+      data: myItems,
+      message: "Your posted items fetched successfully!",
+    });
+  } catch (error) {
+    console.error("getMyPostedItems error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch your posted items",
       error: error.message,
     });
   }
@@ -269,6 +275,25 @@ exports.getRentedItems = async (req, res) => {
       message: "Failed to fetch rented items",
       error: error.message,
     });
+  }
+};
+// PUT /rentitem/:id/toggle-status
+exports.toggleRentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const item = await RentItem.findById(id);
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    item.isRented = !item.isRented;
+    await item.save();
+
+    res.status(200).json({ message: "Status updated", data: item });
+  } catch (error) {
+    console.error("Toggle status error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

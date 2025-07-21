@@ -25,11 +25,11 @@ const tookrent = new mongoose.Schema(
      * Rental period
      * ------------------------------------------------- */
     startTime: {
-      type: Number, // e.g. 9
+      type: Number, // like 12 (for 12 PM)
       required: true,
     },
     endTime: {
-      type: Number, // e.g. 13
+      type: Number, // like 16 (for 4 PM)
       required: true,
     },
 

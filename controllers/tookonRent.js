@@ -66,7 +66,6 @@ exports.Tookrentforbook = async (req, res) => {
     });
   }
 };
-
 // GET /tookonRent/my
 exports.getMyRentedItems = async (req, res) => {
   try {

@@ -1,1 +1,18 @@
+# .env
+# node_modules
+# Node dependencies
+node_modules/
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Optional:
+dist/
+build/
+.cache/

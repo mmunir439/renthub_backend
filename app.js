@@ -9,8 +9,8 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    // origin: process.env.FRONTEND_URL,
+    // origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL,
     credentials: true, // if using cookies/auth tokens
   })
 );

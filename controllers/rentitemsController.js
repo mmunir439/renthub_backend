@@ -18,7 +18,7 @@ exports.addnewitem = async (req, res) => {
   } = req.body;
   const parsedFeatures = features; // Just keep it as-is, a paragraph string
 
-  const owner = req.user.id;
+  const owner = req.user.id;  
 
   try {
     // 2️⃣  Handle the (optional) image

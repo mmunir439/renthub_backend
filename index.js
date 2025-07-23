@@ -14,7 +14,7 @@ app.use(
 );
 app.use(express.json());
 // Routes
-const adminRoutes = require("./routes/adminRoutes");
+const adminRoutes = require("./routes/adminRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
 const rentitemRoutes = require("./routes/rentitemRoutes.js");
 const tookonRent = require("./routes/tookonRent.js");

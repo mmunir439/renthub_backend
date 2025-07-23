@@ -10,8 +10,7 @@ connectDB();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
-    // origin: process.env.FRONTEND_URL,
-    credentials: true, // if using cookies/auth tokens
+    credentials: true,
   })
 );
 app.use(express.json());
@@ -34,6 +33,6 @@ app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });
 
-app.listen(5000, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port 5000");
 });

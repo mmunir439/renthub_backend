@@ -2,7 +2,6 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors"); // ✅ Add this
 const connectDB = require("./config/db.js");
-const PORT = process.env.PORT || 8000;
 const app = express();
 require("dotenv").config();
 
@@ -14,9 +13,6 @@ app.use(
   })
 );
 app.use(express.json());
-app.get("/test", (req, res) => {
-  res.send("User route working!");
-});
 // Routes
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes.js");
@@ -32,7 +28,13 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });
+app.get("/test", (req, res) => {
+  res.send("User route working!");
+});
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port  ${PORT}`);
+// node web server
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`App listening on port: ${port}`);
 });

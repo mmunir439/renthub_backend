@@ -9,8 +9,8 @@ require("dotenv").config();
 connectDB();
 app.use(
   cors({
-    // origin: "http://localhost:3000",
     origin: process.env.FRONTEND_URL,
+    // origin: process.env.FRONTEND_URL,
     credentials: true, // if using cookies/auth tokens
   })
 );
@@ -18,7 +18,6 @@ app.use(express.json());
 app.get("/test", (req, res) => {
   res.send("User route working!");
 });
-
 // Routes
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes.js");
@@ -35,8 +34,6 @@ app.get("/", (req, res) => {
   res.send("welcome to renthub portal");
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(
-    `Server running on port ${process.env.PORT} and data base ${process.env.MONGO_URI}`
-  );
+app.listen(5000, "0.0.0.0", () => {
+  console.log("Server running on port 5000");
 });

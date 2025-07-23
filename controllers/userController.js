@@ -39,53 +39,78 @@ exports.registeruser = async (req, res) => {
   const { name, email, password, phone, address } = req.body;
 
   try {
-    // Check if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    // Validate input
+    if (!name || !email || !password || !phone || !address) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
-    // Hash the password
+    // Check for existing email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already exists" });
+    }
+
+    // Check for existing phone
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Phone number already exists" });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create and save the new user
+    // Create user
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      phone, // ✅
+      phone,
       address,
     });
-
     const savedUser = await newUser.save();
 
-    // ✅ Welcome email content
+    // Welcome email
     const html = `
       <div style="font-family: sans-serif; line-height: 1.6;">
         <h2>Hello, ${savedUser.name}!</h2>
         <p>Welcome to <strong>RentHub</strong> — the marketplace for renting and listing items safely and quickly.</p>
-        <ul>
-          <li>List your items and earn money.</li>
-          <li>Browse thousands of items to rent at affordable prices.</li>
-          <li>Connect safely with other users.</li>
-        </ul>
-        <p>We’re excited to have you join the RentHub community.</p>
-        <a href="https://www.renthub.com" style="display:inline-block;background-color:#007bff;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">Visit RentHub</a>
-        <p>Happy Renting!</p>
-        <p>- The RentHub Team</p>
+        ...
       </div>
     `;
 
-    // Send welcome email
-    await sendEmail(savedUser.email, "Welcome to RentHub!", html);
+    try {
+      await sendEmail(savedUser.email, "Welcome to RentHub!", html);
+    } catch (emailError) {
+      console.warn("Email failed to send:", emailError.message);
+    }
+
+    // Remove password before sending back
+    const userToReturn = { ...savedUser._doc };
+    delete userToReturn.password;
 
     res.status(201).json({
       success: true,
-      data: savedUser,
-      message: "User registered and email sent!",
+      data: userToReturn,
+      message: "User registered successfully",
     });
   } catch (error) {
     console.error("Register error:", error);
+
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue)[0];
+      const duplicateValue = error.keyValue[duplicateField];
+      return res.status(400).json({
+        success: false,
+        message: `${duplicateField} "${duplicateValue}" already exists`,
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Registration failed",

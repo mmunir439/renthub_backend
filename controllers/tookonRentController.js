@@ -1,84 +1,5 @@
 const retnitemModel = require("../models/retnitemModel"); // Check this name if it's correct
 const tookitemModel = require("../models/tookonRent"); // Check this name if it's correct
-// POST /tookonRent/:rentitemId
-// exports.Tookrentforbook = async (req, res) => {
-//   try {
-//     const { startTime, endTime } = req.body;
-//     const { rentitemId } = req.params;
-//     const userId = req.user._id;
-
-//     // ❌ Prevent admin from booking
-//     if (req.user.role === "admin") {
-//       return res.status(403).json({
-//         message: "Admins are not allowed to rent items.",
-//       });
-//     }
-
-//     console.log("📩 Booking request received by user:", userId);
-
-//     // ✅ Find the item and make sure it's approved
-//     const item = await retnitemModel.findOne({
-//       _id: rentitemId,
-//       status: "approved",
-//     });
-
-//     if (!item) {
-//       return res
-//         .status(404)
-//         .json({ message: "Item not found or not approved by admin." });
-//     }
-
-//     // ❌ Prevent owner from renting their own item
-//     if (item.owner.toString() === userId.toString()) {
-//       return res
-//         .status(400)
-//         .json({ message: "You cannot rent your own item." });
-//     }
-
-//     // ✅ Calculate duration in hours
-//     const start = new Date(startTime);
-//     const end = new Date(endTime);
-//     const hours = (end - start) / (1000 * 60 * 60); // milliseconds → hours
-
-//     if (isNaN(hours) || hours <= 0) {
-//       return res
-//         .status(400)
-//         .json({ message: "Invalid rental duration provided." });
-//     }
-
-//     // ✅ Calculate total price
-//     const totalPrice = hours * item.pricePerHour;
-
-//     const bookingData = {
-//       item: item._id,
-//       renter: userId,
-//       startTime,
-//       endTime,
-//       totalHours: hours,
-//       totalPrice,
-//     };
-
-//     // ✅ Create booking
-//     const booking = await tookitemModel.create(bookingData);
-
-//     // ✅ Mark item as rented
-//     item.isRented = true;
-//     await item.save();
-
-//     console.log("✅ Booking successful:", booking._id);
-
-//     res.status(201).json({
-//       message: "Item rented successfully",
-//       booking,
-//     });
-//   } catch (err) {
-//     console.error("❌ Booking error:", err);
-//     res.status(500).json({
-//       message: "Server error while booking item",
-//       error: err.message,
-//     });
-//   }
-// };
 exports.Tookrentforbook = async (req, res) => {
   try {
     const { startTime, endTime } = req.body;
@@ -187,3 +108,63 @@ exports.getMyRentedItems = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch your bookings" });
   }
 };
+// PUT /tookonRent/:bookingId
+exports.updateBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { startTime, endTime } = req.body;
+
+    const booking = await tookitemModel.findById(bookingId).populate("item");
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.renter.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const hours = (end - start) / (1000 * 60 * 60);
+
+    if (hours <= 0) {
+      return res.status(400).json({ message: "Invalid time range" });
+    }
+
+    booking.startTime = start;
+    booking.endTime = end;
+    booking.totalHours = Math.round(hours);
+    booking.totalPrice = booking.totalHours * booking.item.pricePerHour;
+
+    await booking.save();
+
+    res.json({ message: "Booking updated successfully", booking });
+  } catch (err) {
+    console.error("❌ Update booking error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+// DELETE /tookonRent/:bookingId
+exports.deleteBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await tookitemModel.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.renter.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    await tookitemModel.findByIdAndDelete(bookingId);
+
+    res.json({ message: "Booking deleted successfully" });
+  } catch (err) {
+    console.error("❌ Delete booking error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+

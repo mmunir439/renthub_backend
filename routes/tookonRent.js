@@ -12,5 +12,6 @@ router.post("/:rentitemId", protect, Tookrentforbook);
 router.get("/my", protect, getMyRentedItems);
 router.put("/:bookingId", protect, updateBooking);
 router.delete("/:bookingId", protect, deleteBooking);
+console.log("hi");
 
 module.exports = router;
